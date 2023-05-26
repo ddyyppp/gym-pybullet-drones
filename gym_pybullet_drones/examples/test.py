@@ -53,3 +53,88 @@ total_force, total_torque = compute_total_force_and_torque(drone1, drone2)
 
 print("Total force:", total_force)
 print("Total torque:", total_torque)
+
+
+
+    def __magnetForce(self,i,j):
+        """PyBullet implementation of a ground effect model.
+
+        Inspired by the analytical model used for comparison in (Shi et al., 2019).
+
+        Parameters
+        ----------
+        rpm : ndarray
+            (4)-shaped array of ints containing the RPMs values of the 4 motors.
+        nth_drone : int
+            The ordinal number/position of the desired drone in list self.DRONE_IDS.
+
+        """
+        for ii in range(6):
+            for jj in range(6):
+                delta = np.linalg.norm(np.array(self.pos[i, 0:3]) - np.array(self.pos[j, 0:3]))
+                if delta < 1: # Ignore the magnet of drones more than 1 meters away
+                    # Clauculate the position of the 4 ecke
+                    length = 0.3
+                    height = 0.1
+
+                    magnetForce = [0, 0, 10]
+    ################################################################################
+
+   # import numpy as np
+   #
+#
+   # # 真空磁导率
+   # mu0 = 4 * np.pi * 1e-7
+#
+   # # 定义长方体的维度和中心位置
+   # box_dimensions = np.array([1, 1, 1])  # 例子：长、宽、高都为1，需要根据实际情况修改
+   # box_center1 = np.array([0, 0, 0])  # 例子：第一个长方体的中心坐标，需要根据实际情况修改
+   # box_center2 = np.array([2, 2, 2])  # 例子：第二个长方体的中心坐标，需要根据实际情况修改
+#
+   # # 定义长方体的RPY角度
+   # rpy_angles1 = np.array([0, 0, 0])  # 例子：第一个长方体的RPY角度，需要根据实际情况修改
+   # rpy_angles2 = np.array([0, 0, 0])  # 例子：第二个长方体的RPY角度，需要根据实际情况修改
+#
+   # # 定义磁偶极的磁矩
+   # magnet_moments = np.array([1, 1, 1, 1, 1, 1])  # 例子：所有磁偶极的磁矩都为1，需要根据实际情况修改
+#
+   # # 计算长方体的角的相对位置
+   # corner_offsets = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [1, 1, 0], [0, 0, 1], [1, 1, 1]]) - 0.5
+   # corner_offsets *= box_dimensions
+#
+   # # 用RPY角度计算旋转矩阵
+   # rotation1 = R.from_euler('xyz', rpy_angles1)
+   # rotation2 = R.from_euler('xyz', rpy_angles2)
+#
+   # # 用旋转矩阵和中心位置计算每个角的实际位置
+   # magnet_positions1 = np.dot(corner_offsets, rotation1.as_matrix().T) + box_center1
+   # magnet_positions2 = np.dot(corner_offsets, rotation2.as_matrix().T) + box_center2
+#
+   # n_magnets = len(magnet_positions1)
+#
+   # # 初始化总力和总力矩为零
+   # total_force = np.array([0, 0, 0])
+   # total_torque1 = np.array([0, 0, 0])
+   # total_torque2 = np.array([0, 0, 0])
+#
+   # # 计算每一对磁偶极间的作用力和力矩
+   # for i in range(n_magnets):
+   #     for j in range(n_magnets):
+   #         r = magnet_positions2[j] - magnet_positions1[i]  # 位置矢量
+   #         r_norm = np.linalg.norm(r)  # 距离
+   #         r_hat = r / r_norm  # 方向
+#
+   #         # 计算力的大小和方向
+   #         force_magnitude = mu0 / (4 * np.pi) * (magnet_moments[i] * magnet_moments[j]) / r_norm ** 2
+   #         force = force_magnitude * r_hat
+#
+   #         # 添加到总力
+   #         total_force += force
+#
+   #         # 计算并添加到总力矩
+   #         total_torque1 += np.cross(magnet_positions1[i], force)
+   #         total_torque2 += np.cross(magnet_positions2[j], -force)
+#
+   # print("Total force: ", total_force)
+   # print("Total torque on box 1: ", total_torque1)
+   # print("Total torque on box 2: ", total_torque2)
