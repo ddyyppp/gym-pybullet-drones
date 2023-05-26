@@ -36,7 +36,7 @@ if __name__ == "__main__":
     #### Create the ENVironment ################################
     ENV = CtrlAviary(num_drones=3,
                      drone_model=DroneModel.CF2P,
-                     initial_xyzs=np.array([ [.0, .0, .15], [-.3, .0, .15], [.3, .0, .15] ]),
+                     initial_xyzs=np.array([ [.0, .0, 0.2], [-.3, .0, .15], [.3, .0, .15] ]),
                      gui=GUI,
                      record=RECORD
                      )
@@ -100,48 +100,48 @@ if __name__ == "__main__":
     for i in range(0, DURATION*ENV.SIM_FREQ):
 
         ### Secret control performance booster #####################
-        # if i/ENV.SIM_FREQ>3 and i%30==0 and i/ENV.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [random.gauss(0, 0.3), random.gauss(0, 0.3), 3], p.getQuaternionFromEuler([random.randint(0, 360),random.randint(0, 360),random.randint(0, 360)]), physicsClientId=PYB_CLIENT)
+        #if i/ENV.SIM_FREQ>3 and i%30==0 and i/ENV.SIM_FREQ<10: p.loadURDF("duck_vhacd.urdf", [random.gauss(0, 0.3), random.gauss(0, 0.3), 3], p.getQuaternionFromEuler([random.randint(0, 360),random.randint(0, 360),random.randint(0, 360)]), physicsClientId=PYB_CLIENT)
 
         #### Step the simulation ###################################
+
         OBS, _, _, _ = ENV.step(ACTION)
 
         #### Compute control for drone 0 ###########################
-        STATE = OBS["0"]["state"]
-        ACTION["0"] = CTRL_0.compute_control(current_position=STATE[0:3],
+        if i % 1 == 0:
+            STATE = OBS["0"]["state"]
+            ACTION["0"] = CTRL_0.compute_control(current_position=STATE[0:3],
                                              current_velocity=STATE[10:13],
                                              current_rpy=STATE[7:10],
                                              target_position=TARGET_POSITION[i, :],
                                              target_velocity=TARGET_VELOCITY[i, :],
                                              target_acceleration=TARGET_ACCELERATION[i, :]
                                              )
-        #### Log drone 0 ###########################################
-        LOGGER.log(drone=0, timestamp=i/ENV.SIM_FREQ, state=STATE)
-
-        #### Compute control for drone 1 ###########################
-        STATE = OBS["1"]["state"]
-        ACTION["1"] = CTRL_1.compute_control(current_position=STATE[0:3],
+            #### Log drone 0 ###########################################
+            LOGGER.log(drone=0, timestamp=i/ENV.SIM_FREQ, state=STATE)
+            #### Compute control for drone 1 ###########################
+            STATE = OBS["1"]["state"]
+            ACTION["1"] = CTRL_1.compute_control(current_position=STATE[0:3],
                                              current_velocity=STATE[10:13],
                                              current_rpy=STATE[7:10],
                                              target_position=TARGET_POSITION[i, :] + np.array([-.3, .0, .0]),
                                              target_velocity=TARGET_VELOCITY[i, :],
                                              target_acceleration=TARGET_ACCELERATION[i, :]
                                              )
-        #### Log drone 1 ###########################################
-        LOGGER.log(drone=1, timestamp=i/ENV.SIM_FREQ, state=STATE)
+            #### Log drone 1 ###########################################
+            LOGGER.log(drone=1, timestamp=i/ENV.SIM_FREQ, state=STATE)
+            #### Compute control for drone 2 ###########################
+            STATE = OBS["2"]["state"]
+            ACTION["2"] = CTRL_2.compute_control(current_position=STATE[0:3],
+                                                 current_velocity=STATE[10:13],
+                                                 current_rpy=STATE[7:10],
+                                                 target_position=TARGET_POSITION[i, :] + np.array([.3, .0, .0]),
+                                                 target_velocity=TARGET_VELOCITY[i, :],
+                                                 target_acceleration=TARGET_ACCELERATION[i, :]
+                                                 )
+            #### Log drone 2 ###########################################
+            LOGGER.log(drone=2, timestamp=i/ENV.SIM_FREQ, state=STATE)
 
-        #### Compute control for drone 2 ###########################
-        STATE = OBS["2"]["state"]
-        ACTION["2"] = CTRL_2.compute_control(current_position=STATE[0:3],
-                                             current_velocity=STATE[10:13],
-                                             current_rpy=STATE[7:10],
-                                             target_position=TARGET_POSITION[i, :] + np.array([.3, .0, .0]),
-                                             target_velocity=TARGET_VELOCITY[i, :],
-                                             target_acceleration=TARGET_ACCELERATION[i, :]
-                                             )
-        #### Log drone 2 ###########################################
-        LOGGER.log(drone=2, timestamp=i/ENV.SIM_FREQ, state=STATE)
-
-        #### Printout ##############################################
+            #### Printout ##############################################
         if i%ENV.SIM_FREQ == 0:
             ENV.render()
 

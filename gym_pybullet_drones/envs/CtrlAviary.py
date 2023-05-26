@@ -15,7 +15,7 @@ class CtrlAviary(BaseAviary):
                  neighbourhood_radius: float=np.inf,
                  initial_xyzs=None,
                  initial_rpys=None,
-                 physics: Physics=Physics.PYB,
+                 physics: Physics=Physics.PYB_GND_DRAG_DW,
                  freq: int=240,
                  aggregate_phy_steps: int=1,
                  gui=False,
