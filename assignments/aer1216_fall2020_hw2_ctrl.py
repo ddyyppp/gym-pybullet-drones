@@ -217,11 +217,20 @@ class HW2Control():
         propellers_rpm = np.dot(self.matrix_u2rpm_inv, u)
 
         #### Command the turn rates of propellers 1 and 3 ##########
-        propellers_1_rpm = np.sqrt(propellers_rpm[1, 0])
-        propellers_3_rpm = np.sqrt(propellers_rpm[2, 0])
+        if (propellers_rpm[1, 0]) <= 0:
+            propellers_1_rpm = 0
+        else:
+            propellers_1_rpm = np.sqrt(propellers_rpm[1, 0])
+        if (propellers_rpm[2, 0]) <= 0:
+            propellers_3_rpm = 0
+        else:
+            propellers_3_rpm = np.sqrt(propellers_rpm[2, 0])
 
         #### For motion in the Y-Z plane, assign the same turn rates to prop. 0 and 2
-        propellers_0_and_2_rpm = np.sqrt(propellers_rpm[0, 0])
+        if propellers_rpm[0, 0] <= 0:
+            propellers_0_and_2_rpm = 0
+        else:
+            propellers_0_and_2_rpm = np.sqrt(propellers_rpm[0, 0])
 
         #### Print relevant output #################################
         if self.control_counter%(1/self.timestep) == 0:

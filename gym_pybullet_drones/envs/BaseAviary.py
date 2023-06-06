@@ -29,8 +29,8 @@ class BaseAviary(gym.Env):
                  neighbourhood_radius: float=np.inf,
                  initial_xyzs=None,
                  initial_rpys=None,
-                 physics: Physics=Physics.PYB,
-                 freq: int=2400,
+                 physics: Physics=Physics.PYB_GND,
+                 freq: int=240,
                  aggregate_phy_steps: int=1,
                  gui=False,
                  record=False,
@@ -75,7 +75,7 @@ class BaseAviary(gym.Env):
 
         """
 
-        self.cage = [Cage(np.zeros(3)), Cage(np.zeros(3)), Cage(np.zeros(3))]
+
         #### Constants #############################################
         self.G = 9.8
         self.RAD2DEG = 180/np.pi
@@ -112,7 +112,8 @@ class BaseAviary(gym.Env):
         self.DRAG_COEFF, \
         self.DW_COEFF_1, \
         self.DW_COEFF_2, \
-        self.DW_COEFF_3 = self._parseURDFParameters()
+        self.DW_COEFF_3,\
+        self.MAGNET_MOMENTS = self._parseURDFParameters()
 
         print("[INFO] BaseAviary.__init__() loaded parameters from the drone's .urdf:\n[INFO] m {:f}, L {:f},\n[INFO] ixx {:f}, iyy {:f}, izz {:f},\n[INFO] kf {:f}, km {:f},\n[INFO] t2w {:f}, max_speed_kmh {:f},\n[INFO] gnd_eff_coeff {:f}, prop_radius {:f},\n[INFO] drag_xy_coeff {:f}, drag_z_coeff {:f},\n[INFO] dw_coeff_1 {:f}, dw_coeff_2 {:f}, dw_coeff_3 {:f}".format(
             self.M, self.L, self.J[0,0], self.J[1,1], self.J[2,2], self.KF, self.KM, self.THRUST2WEIGHT_RATIO, self.MAX_SPEED_KMH, self.GND_EFF_COEFF, self.PROP_RADIUS, self.DRAG_COEFF[0], self.DRAG_COEFF[2], self.DW_COEFF_1, self.DW_COEFF_2, self.DW_COEFF_3))
@@ -328,16 +329,21 @@ class BaseAviary(gym.Env):
             for i in range (self.NUM_DRONES):
                 if self.PHYSICS == Physics.PYB:
                     self._physics(clipped_action[i, :], i)
+                    self._magnetEffect(i)
                 elif self.PHYSICS == Physics.DYN:
+                    self._magnetEffect(i)
                     self._dynamics(clipped_action[i, :], i)
                 elif self.PHYSICS == Physics.PYB_GND:
                     self._physics(clipped_action[i, :], i)
+                    self._magnetEffect(i)
                     self._groundEffect(clipped_action[i, :], i)
                 elif self.PHYSICS == Physics.PYB_DRAG:
                     self._physics(clipped_action[i, :], i)
+                    self._magnetEffect(i)
                     self._drag(self.last_clipped_action[i, :], i)
                 elif self.PHYSICS == Physics.PYB_DW:
                     self._physics(clipped_action[i, :], i)
+                    self._magnetEffect(i)
                     self._downwash(i)
                 elif self.PHYSICS == Physics.PYB_GND_DRAG_DW:
                     self._physics(clipped_action[i, :], i)
@@ -986,8 +992,8 @@ class BaseAviary(gym.Env):
         J_INV = np.linalg.inv(J)
         KF = float(URDF_TREE[0].attrib['kf'])
         KM = float(URDF_TREE[0].attrib['km'])
-        COLLISION_H = float(URDF_TREE[1][2][1][0].attrib['length'])
-        COLLISION_R = float(URDF_TREE[1][2][1][0].attrib['radius'])
+        COLLISION_H = URDF_TREE[1][2][1][0].attrib['size']
+        COLLISION_R = URDF_TREE[1][2][1][0].attrib['size']
         COLLISION_SHAPE_OFFSETS = [float(s) for s in URDF_TREE[1][2][0].attrib['xyz'].split(' ')]
         COLLISION_Z_OFFSET = COLLISION_SHAPE_OFFSETS[2]
         MAX_SPEED_KMH = float(URDF_TREE[0].attrib['max_speed_kmh'])
@@ -999,8 +1005,15 @@ class BaseAviary(gym.Env):
         DW_COEFF_1 = float(URDF_TREE[0].attrib['dw_coeff_1'])
         DW_COEFF_2 = float(URDF_TREE[0].attrib['dw_coeff_2'])
         DW_COEFF_3 = float(URDF_TREE[0].attrib['dw_coeff_3'])
+        MAGNET_MOMENTS = []
+
+        for magnet in URDF_TREE.iter('link'):
+            if 'magnet' in magnet.attrib['name']:
+                magnet_properties = magnet.find('properties')
+                magnet_xyz = [float(s) for s in magnet_properties.attrib['magnet_xyz'].split(' ')]
+                MAGNET_MOMENTS.append(magnet_xyz)
         return M, L, THRUST2WEIGHT_RATIO, J, J_INV, KF, KM, COLLISION_H, COLLISION_R, COLLISION_Z_OFFSET, MAX_SPEED_KMH, \
-               GND_EFF_COEFF, PROP_RADIUS, DRAG_COEFF, DW_COEFF_1, DW_COEFF_2, DW_COEFF_3
+               GND_EFF_COEFF, PROP_RADIUS, DRAG_COEFF, DW_COEFF_1, DW_COEFF_2, DW_COEFF_3,MAGNET_MOMENTS
     
     ################################################################################
     
@@ -1082,31 +1095,42 @@ class BaseAviary(gym.Env):
 
     ################################################################################
 
-    def updateCagePos(self):
-        for ii in range(self.NUM_DRONES):
-            self.cage[ii].pos = np.array([
-                [
-                    self.pos[ii][0] + i * self.cage[ii].cage_size_a / 2,
-                    self.pos[ii][1] + j * self.cage[ii].cage_size_b / 2,
-                    self.pos[ii][2] + k * self.cage[ii].cage_size_c / 2
-                ]
-                for i in [-1, 1]
-                for j in [-1, 1]
-                for k in [-1, 1]
-            ])
+
 
     def compute_total_force_and_torque(self, drone1, drone2):
         total_force = np.array([0.0, 0.0, 0.0])
         total_torque = np.array([0.0, 0.0, 0.0])
 
-        for dipole1 in range(8):
-            for dipole2 in range(8):
-                r = self.cage[drone1].pos[dipole1] - self.cage[drone2].pos[dipole2]
-                r_norm = np.linalg.norm(r)
-                r_unit = r / r_norm
-                force = (3 * np.dot(self.cage[drone1].moment, r_unit) * r_unit - self.cage[drone1].moment) / r_norm ** 3
-                total_force += force
-                total_torque += np.cross(self.cage[drone1].pos[dipole1] - self.pos[drone1], force)
+        for dipole1 in range(16):
+            for dipole2 in range(16):
+                pos1 = np.array(p.getLinkState(drone1 + 1, dipole1 + 5)[0])
+                pos2 = np.array(p.getLinkState(drone2 + 1, dipole2 + 5)[0])
+                mu0 = 4*np.pi*1e-7
+                r = pos1 - pos2
+               # r = r +np.array([0.003, 0.003, 0.003])
+                r_norm = np.linalg.norm(r) + 0.0005
+               # r_unit = r / r_norm
+                matrix = p.getMatrixFromQuaternion(p.getLinkState(drone1+1, dipole1+5)[1])
+                rot_matrix = np.array([[matrix[0], matrix[1], matrix[2]],
+                              [matrix[3], matrix[4], matrix[5]],
+                              [matrix[6], matrix[7], matrix[8]]])
+                moment1 = 0.005*np.dot(rot_matrix,self.MAGNET_MOMENTS[dipole1])
+                matrix = p.getMatrixFromQuaternion(p.getLinkState(drone2 + 1, dipole2 + 5)[1])
+                rot_matrix = np.array([[matrix[0], matrix[1], matrix[2]],
+                                       [matrix[3], matrix[4], matrix[5]],
+                                       [matrix[6], matrix[7], matrix[8]]])
+                moment2 = 0.005*np.dot(rot_matrix,self.MAGNET_MOMENTS[dipole2] )
+                force = -(3 * mu0 / (4 * np.pi * r_norm ** 5)) * (np.dot(moment1, moment2) * r + np.dot(moment1, r) * moment2 + np.dot(moment2, r) * moment1 - 5*np.dot(np.dot(moment1, r),np.dot(moment2, r)*r/r_norm**2))
+                #force = (3 * np.dot(moment1, r_unit) * r_unit - moment2) / r_norm ** 3
+                p.applyExternalForce(self.DRONE_IDS[drone1],
+                                     4,
+                                     forceObj=force,
+                                     posObj=p.getLinkState(drone1+1, dipole1+5)[2],
+                                     flags=p.LINK_FRAME,
+                                     physicsClientId=self.CLIENT
+                                     )
+                #total_force += force
+                #total_torque += np.cross(pos1 - self.pos[drone1], force)
         return total_force, total_torque
 
     def _magnetEffect(self,nth_drone):
@@ -1120,20 +1144,24 @@ class BaseAviary(gym.Env):
             The ordinal number/position of the desired drone in list self.DRONE_IDS.
 
         """
-        self.updateCagePos()
         for i in range(self.NUM_DRONES):
             if i != nth_drone:
                 delta = np.linalg.norm(np.array(self.pos[i, 0:3]) - np.array(self.pos[nth_drone, 0:3]))
                 if delta < 1: # Ignore the magnet of drones more than 1 meters away
 
-                    magnetForce, magnetTorque = self.compute_total_force_and_torque(nth_drone, i)
-                    p.applyExternalForce(self.DRONE_IDS[nth_drone],
-                                         4,
-                                         forceObj=magnetForce,
-                                         posObj=[0, 0, 0],
-                                         flags=p.LINK_FRAME,
-                                         physicsClientId=self.CLIENT
-                                         )
+                    self.compute_total_force_and_torque(nth_drone, i)
+              #      p.applyExternalForce(self.DRONE_IDS[nth_drone],
+              #                           4,
+              #                           forceObj=magnetForce,
+              #                           posObj=[0, 0, 0],
+              #                           flags=p.LINK_FRAME,
+              #                           physicsClientId=self.CLIENT
+              #                           )
+              #      p.applyExternalTorque(self.DRONE_IDS[nth_drone],
+              #                            4,
+              #                            magnetTorque,
+              #                            flags=p.WORLD_FRAME,
+              #                            physicsClientId=self.CLIENT)
 
 
 
@@ -1141,15 +1169,6 @@ class BaseAviary(gym.Env):
 
 
 
-class Cage:
-    def __init__(self, pos):
-        # 磁偶极在笼子角上的位置
-        self.cage_size_a = 0.2  # 笼子的长度
-        self.cage_size_b = 0.2  # 笼子的宽度
-        self.cage_size_c = 0.2  # 笼子的高度
-        self.moment = 0.0000001
-        self.pos = np.array([([pos[0] + i * self.cage_size_a / 2, pos[1] + j * self.cage_size_b / 2, pos[2] + k * self.cage_size_c / 2] )
-                        for i in [-1, 1] for j in [-1, 1] for k in [-1, 1]])
 
 
 

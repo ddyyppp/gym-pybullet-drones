@@ -8,8 +8,8 @@
 
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.027"/>
-      <inertia ixx="2.3951e-5" ixy="0.0" ixz="0.0" iyy="2.3951e-5" iyz="0.0" izz="3.2347e-5"/>
+      <mass value="0.034"/>
+      <inertia ixx="4.134e-5" ixy="0.0" ixz="0.0" iyy="4.134e-5" iyz="0.0" izz="7.043e-5"/>
     </inertial>
 
     <!-- links>
@@ -19,7 +19,7 @@
     </links -->
 
     <visual>
-      <origin rpy="0 0 95" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
         <mesh filename="./cf2.dae" scale=" 1 1 1"/>
       </geometry> 
@@ -29,9 +29,9 @@
     </visual>
 
     <collision>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="-0.059 -0.059 0"/>
       <geometry>
-        <cylinder radius=".06" length=".025"/>
+        <box size="0.118 0.118 0.048"/>
       </geometry>
     </collision>  
 
@@ -89,12 +89,222 @@
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0"/>
+	  <properties />
       <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
     </inertial>
   </link>
   <joint name="center_of_mass_joint" type="fixed">
     <parent link="base_link"/>
     <child link="center_of_mass_link"/>
+  </joint>
+  <!-- number 5 -->
+  <link name="magnet1_link">
+    <properties magnet_xyz = "0 -0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.055 0.059 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet1_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet1_link"/>
+  </joint>
+  
+  <link name="magnet2_link">
+  <properties magnet_xyz = "0 -0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.055 -0.059 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet2_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet2_link"/>
+  </joint>
+  
+    <link name="magnet3_link">
+  <properties magnet_xyz = "0 0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.055 0.059 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet3_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet3_link"/>
+  </joint>
+  
+   <link name="magnet4_link">
+  <properties magnet_xyz = "0 0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.055 -0.059 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet4_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet4_link"/>
+  </joint>
+  
+  <link name="magnet5_link">
+    <properties magnet_xyz = "0 0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.055 0.059 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet5_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet5_link"/>
+  </joint>
+  
+  <link name="magnet6_link">
+  <properties magnet_xyz = "0 0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.055 -0.059 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet6_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet6_link"/>
+  </joint>
+  
+    <link name="magnet7_link">
+  <properties magnet_xyz = "0 -0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.055 0.059 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet7_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet7_link"/>
+  </joint>
+  
+  <link name="magnet8_link">
+  <properties magnet_xyz = "0 -0.1 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.055 -0.059 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet8_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet8_link"/>
+  </joint>
+  
+  
+  <link name="magnet9_link">
+    <properties magnet_xyz = "0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.059 0.055 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet9_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet9_link"/>
+  </joint>
+  
+  <link name="magnet10_link">
+  <properties magnet_xyz = "-0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.059 -0.055 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet10_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet10_link"/>
+  </joint>
+  
+    <link name="magnet11_link">
+  <properties magnet_xyz = "0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.059 0.055 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet11_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet11_link"/>
+  </joint>
+  
+   <link name="magnet12_link">
+  <properties magnet_xyz = "-0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.059 -0.055 0"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet12_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet12_link"/>
+  </joint>
+  
+  <link name="magnet13_link">
+    <properties magnet_xyz = "-0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.059 0.055 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet13_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet13_link"/>
+  </joint>
+  
+  <link name="magnet14_link">
+  <properties magnet_xyz = "0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.059 -0.055 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet14_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet14_link"/>
+  </joint>
+  
+    <link name="magnet15_link">
+  <properties magnet_xyz = "-0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.059 0.055 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet15_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet15_link"/>
+  </joint>
+  
+  <link name="magnet16_link">
+  <properties magnet_xyz = "0.1 0 0" />
+    <inertial>
+      <origin rpy="0 0 0" xyz="-0.059 -0.055 0.048"/>
+      <mass value="0"/>
+      <inertia ixx="0" ixy="0.0" ixz="0.0" iyy="0" iyz="0.0" izz="0"/>
+    </inertial>
+  </link>
+  <joint name="magnet16_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="magnet16_link"/>
   </joint>
 
 </robot>
