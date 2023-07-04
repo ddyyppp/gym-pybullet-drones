@@ -27,14 +27,14 @@
         <color rgba=".5 .5 .5 1"/>
       </material> 
     </visual>
-
+	<!-- links>
     <collision>
       <origin rpy="0 0 0" xyz="-0.059 -0.059 0"/>
       <geometry>
         <box size="0.118 0.118 0.048"/>
       </geometry>
     </collision>  
-
+    </links -->
   </link>
 
   <link name="prop0_link">

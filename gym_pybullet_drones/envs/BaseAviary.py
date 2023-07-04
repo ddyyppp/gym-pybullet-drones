@@ -103,9 +103,6 @@ class BaseAviary(gym.Env):
         self.J_INV, \
         self.KF, \
         self.KM, \
-        self.COLLISION_H,\
-        self.COLLISION_R, \
-        self.COLLISION_Z_OFFSET, \
         self.MAX_SPEED_KMH, \
         self.GND_EFF_COEFF, \
         self.PROP_RADIUS, \
@@ -114,7 +111,9 @@ class BaseAviary(gym.Env):
         self.DW_COEFF_2, \
         self.DW_COEFF_3,\
         self.MAGNET_MOMENTS = self._parseURDFParameters()
-
+        #self.COLLISION_H,\
+        #self.COLLISION_R, \
+        #self.COLLISION_Z_OFFSET, \
         print("[INFO] BaseAviary.__init__() loaded parameters from the drone's .urdf:\n[INFO] m {:f}, L {:f},\n[INFO] ixx {:f}, iyy {:f}, izz {:f},\n[INFO] kf {:f}, km {:f},\n[INFO] t2w {:f}, max_speed_kmh {:f},\n[INFO] gnd_eff_coeff {:f}, prop_radius {:f},\n[INFO] drag_xy_coeff {:f}, drag_z_coeff {:f},\n[INFO] dw_coeff_1 {:f}, dw_coeff_2 {:f}, dw_coeff_3 {:f}".format(
             self.M, self.L, self.J[0,0], self.J[1,1], self.J[2,2], self.KF, self.KM, self.THRUST2WEIGHT_RATIO, self.MAX_SPEED_KMH, self.GND_EFF_COEFF, self.PROP_RADIUS, self.DRAG_COEFF[0], self.DRAG_COEFF[2], self.DW_COEFF_1, self.DW_COEFF_2, self.DW_COEFF_3))
         #### Compute constants #####################################
@@ -201,9 +200,10 @@ class BaseAviary(gym.Env):
                                                             )
         #### Set initial poses #####################################
         if initial_xyzs is None:
-            self.INIT_XYZS = np.vstack([np.array([x*4*self.L for x in range(self.NUM_DRONES)]), \
-                                        np.array([y*4*self.L for y in range(self.NUM_DRONES)]), \
-                                        np.ones(self.NUM_DRONES) * (self.COLLISION_H/2-self.COLLISION_Z_OFFSET+.1)]).transpose().reshape(self.NUM_DRONES, 3)
+            print("initial_xyzs is None")
+            #    self.INIT_XYZS = np.vstack([np.array([x*4*self.L for x in range(self.NUM_DRONES)]), \
+        #                                np.array([y*4*self.L for y in range(self.NUM_DRONES)]), \
+        #                                np.ones(self.NUM_DRONES) * (self.COLLISION_H/2-self.COLLISION_Z_OFFSET+.1)]).transpose().reshape(self.NUM_DRONES, 3)
         elif np.array(initial_xyzs).shape == (self.NUM_DRONES,3):
             self.INIT_XYZS = initial_xyzs
         else:
@@ -485,7 +485,10 @@ class BaseAviary(gym.Env):
                 self._showDroneLocalAxes(i)
             #### Disable collisions between drones' and the ground plane
             #### E.g., to start a drone at [0,0,0] #####################
-            # p.setCollisionFilterPair(bodyUniqueIdA=self.PLANE_ID, bodyUniqueIdB=self.DRONE_IDS[i], linkIndexA=-1, linkIndexB=-1, enableCollision=0, physicsClientId=self.CLIENT)
+            p.setCollisionFilterPair(bodyUniqueIdA=self.PLANE_ID, bodyUniqueIdB=self.DRONE_IDS[i], linkIndexA=-1, linkIndexB=-1, enableCollision=0, physicsClientId=self.CLIENT)
+            for j in range(self.NUM_DRONES):
+                p.setCollisionFilterPair(bodyUniqueIdA=self.DRONE_IDS[i], bodyUniqueIdB=self.DRONE_IDS[j], linkIndexA=-1,
+                                         linkIndexB=-1, enableCollision=0, physicsClientId=self.CLIENT)
         if self.OBSTACLES:
             self._addObstacles()
     
@@ -992,10 +995,10 @@ class BaseAviary(gym.Env):
         J_INV = np.linalg.inv(J)
         KF = float(URDF_TREE[0].attrib['kf'])
         KM = float(URDF_TREE[0].attrib['km'])
-        COLLISION_H = URDF_TREE[1][2][1][0].attrib['size']
-        COLLISION_R = URDF_TREE[1][2][1][0].attrib['size']
-        COLLISION_SHAPE_OFFSETS = [float(s) for s in URDF_TREE[1][2][0].attrib['xyz'].split(' ')]
-        COLLISION_Z_OFFSET = COLLISION_SHAPE_OFFSETS[2]
+        #COLLISION_H = 0
+        #COLLISION_R = 0
+        #COLLISION_SHAPE_OFFSETS = 0
+        #COLLISION_Z_OFFSET = 0
         MAX_SPEED_KMH = float(URDF_TREE[0].attrib['max_speed_kmh'])
         GND_EFF_COEFF = float(URDF_TREE[0].attrib['gnd_eff_coeff'])
         PROP_RADIUS = float(URDF_TREE[0].attrib['prop_radius'])
@@ -1012,9 +1015,10 @@ class BaseAviary(gym.Env):
                 magnet_properties = magnet.find('properties')
                 magnet_xyz = [float(s) for s in magnet_properties.attrib['magnet_xyz'].split(' ')]
                 MAGNET_MOMENTS.append(magnet_xyz)
-        return M, L, THRUST2WEIGHT_RATIO, J, J_INV, KF, KM, COLLISION_H, COLLISION_R, COLLISION_Z_OFFSET, MAX_SPEED_KMH, \
-               GND_EFF_COEFF, PROP_RADIUS, DRAG_COEFF, DW_COEFF_1, DW_COEFF_2, DW_COEFF_3,MAGNET_MOMENTS
-    
+        return M, L, THRUST2WEIGHT_RATIO, J, J_INV, KF, KM,\
+            MAX_SPEED_KMH,   GND_EFF_COEFF, PROP_RADIUS, DRAG_COEFF, DW_COEFF_1, DW_COEFF_2, DW_COEFF_3,MAGNET_MOMENTS
+
+    # COLLISION_H, COLLISION_R, COLLISION_Z_OFFSET,
     ################################################################################
     
     def _actionSpace(self):
@@ -1070,6 +1074,10 @@ class BaseAviary(gym.Env):
         Must be implemented in a subclass.
 
         """
+        #rewards = 100
+        #for i in range(self.NUM_DRONES):
+        #    if self.dr
+        #return
         raise NotImplementedError
 
     ################################################################################
@@ -1100,7 +1108,7 @@ class BaseAviary(gym.Env):
     def compute_total_force_and_torque(self, drone1, drone2):
         total_force = np.array([0.0, 0.0, 0.0])
         total_torque = np.array([0.0, 0.0, 0.0])
-
+        r_norm_min = 1
         for dipole1 in range(16):
             for dipole2 in range(16):
                 pos1 = np.array(p.getLinkState(drone1 + 1, dipole1 + 5)[0])
@@ -1108,29 +1116,43 @@ class BaseAviary(gym.Env):
                 mu0 = 4*np.pi*1e-7
                 r = pos1 - pos2
                # r = r +np.array([0.003, 0.003, 0.003])
-                r_norm = np.linalg.norm(r) + 0.0005
-               # r_unit = r / r_norm
-                matrix = p.getMatrixFromQuaternion(p.getLinkState(drone1+1, dipole1+5)[1])
-                rot_matrix = np.array([[matrix[0], matrix[1], matrix[2]],
-                              [matrix[3], matrix[4], matrix[5]],
-                              [matrix[6], matrix[7], matrix[8]]])
-                moment1 = 0.005*np.dot(rot_matrix,self.MAGNET_MOMENTS[dipole1])
-                matrix = p.getMatrixFromQuaternion(p.getLinkState(drone2 + 1, dipole2 + 5)[1])
-                rot_matrix = np.array([[matrix[0], matrix[1], matrix[2]],
-                                       [matrix[3], matrix[4], matrix[5]],
-                                       [matrix[6], matrix[7], matrix[8]]])
-                moment2 = 0.005*np.dot(rot_matrix,self.MAGNET_MOMENTS[dipole2] )
-                force = -(3 * mu0 / (4 * np.pi * r_norm ** 5)) * (np.dot(moment1, moment2) * r + np.dot(moment1, r) * moment2 + np.dot(moment2, r) * moment1 - 5*np.dot(np.dot(moment1, r),np.dot(moment2, r)*r/r_norm**2))
-                #force = (3 * np.dot(moment1, r_unit) * r_unit - moment2) / r_norm ** 3
-                p.applyExternalForce(self.DRONE_IDS[drone1],
-                                     4,
-                                     forceObj=force,
-                                     posObj=p.getLinkState(drone1+1, dipole1+5)[2],
-                                     flags=p.LINK_FRAME,
-                                     physicsClientId=self.CLIENT
-                                     )
-                #total_force += force
-                #total_torque += np.cross(pos1 - self.pos[drone1], force)
+                r_norm = np.linalg.norm(r)+0.05
+                if r_norm < 0.025:
+                    if r_norm_min > r_norm:
+                        r_norm_min = r_norm
+                        i = dipole1
+                        j = dipole2
+                # r_unit = r / r_norm
+                        matrix = p.getMatrixFromQuaternion(p.getLinkState(drone1+1, dipole1+5)[1])
+                        rot_matrix = np.array([[matrix[0], matrix[1], matrix[2]],
+                                      [matrix[3], matrix[4], matrix[5]],
+                                      [matrix[6], matrix[7], matrix[8]]])
+                        moment1 = np.dot(rot_matrix,self.MAGNET_MOMENTS[dipole1])
+                        matrix = p.getMatrixFromQuaternion(p.getLinkState(drone2 + 1, dipole2 + 5)[1])
+                        rot_matrix = np.array([[matrix[0], matrix[1], matrix[2]],
+                                               [matrix[3], matrix[4], matrix[5]],
+                                               [matrix[6], matrix[7], matrix[8]]])
+                        moment2 = np.dot(rot_matrix,self.MAGNET_MOMENTS[dipole2] )
+                        B =  (mu0 / (4 * np.pi * r_norm ** 3))*3*(np.dot(np.dot(moment2,r)/r_norm,r)/r_norm - moment2)
+                        Torque = np.cross(moment1,B)
+                        force = (3 * mu0 / (4 * np.pi * r_norm ** 5)) * (np.dot(moment1, moment2) * r + np.dot(moment1, r) * moment2 + np.dot(moment2, r) * moment1 - 5*np.dot(np.dot(moment1, r),np.dot(moment2, r)*r/r_norm**2))
+                        #force = (3 * np.dot(moment1, r_unit) * r_unit - moment2) / r_norm ** 3
+                    #p.applyExternalTorque(self.DRONE_IDS[drone1],
+                    #                     4,
+                    #                     Torque,
+                    #                     flags=p.LINK_FRAME,
+                    #                     physicsClientId=self.CLIENT
+                    #                     )
+        if r_norm_min < 1:
+            p.applyExternalForce(self.DRONE_IDS[drone1],
+                              4,
+                              force,
+                              posObj=p.getLinkState(drone1+1, i+5)[2],
+                              flags=p.LINK_FRAME,
+                              physicsClientId=self.CLIENT
+                              )
+                    #total_force += force
+                    #total_torque += np.cross(pos1 - self.pos[drone1], force)
         return total_force, total_torque
 
     def _magnetEffect(self,nth_drone):
