@@ -329,25 +329,25 @@ class BaseAviary(gym.Env):
             for i in range (self.NUM_DRONES):
                 if self.PHYSICS == Physics.PYB:
                     self._physics(clipped_action[i, :], i)
-                    self._magnetEffect(i)
+                    #self._magnetEffect(i)
                 elif self.PHYSICS == Physics.DYN:
-                    self._magnetEffect(i)
+                   # self._magnetEffect(i)
                     self._dynamics(clipped_action[i, :], i)
                 elif self.PHYSICS == Physics.PYB_GND:
                     self._physics(clipped_action[i, :], i)
-                    self._magnetEffect(i)
+                  #  self._magnetEffect(i)
                     self._groundEffect(clipped_action[i, :], i)
                 elif self.PHYSICS == Physics.PYB_DRAG:
                     self._physics(clipped_action[i, :], i)
-                    self._magnetEffect(i)
+                  #  self._magnetEffect(i)
                     self._drag(self.last_clipped_action[i, :], i)
                 elif self.PHYSICS == Physics.PYB_DW:
                     self._physics(clipped_action[i, :], i)
-                    self._magnetEffect(i)
+                    #self._magnetEffect(i)
                     self._downwash(i)
                 elif self.PHYSICS == Physics.PYB_GND_DRAG_DW:
                     self._physics(clipped_action[i, :], i)
-                    self._magnetEffect(i)
+                   # self._magnetEffect(i)
                     self._groundEffect(clipped_action[i, :], i)
                     self._drag(self.last_clipped_action[i, :], i)
                     self._downwash(i)
